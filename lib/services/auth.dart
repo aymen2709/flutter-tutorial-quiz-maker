@@ -12,7 +12,8 @@ class AuthService {
       User? firebaseUser = authResult.user;
       return MyUser(uid: firebaseUser!.uid);
     } catch (e) {
-      print(e.toString());
+      FirebaseAuthException exception = e as FirebaseAuthException;
+      return exception.message.toString();
     }
   }
 
@@ -22,7 +23,8 @@ class AuthService {
       User? firebaseUser = authResult.user;
       return MyUser(uid: firebaseUser!.uid);
     } catch (e) {
-      print(e.toString());
+      FirebaseAuthException exception = e as FirebaseAuthException;
+      return exception.message.toString();
     }
   }
 

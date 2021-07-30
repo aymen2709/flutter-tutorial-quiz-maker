@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:quizmaker/models/my_user.dart';
 import 'package:quizmaker/services/auth.dart';
 import 'package:quizmaker/views/home.dart';
 import 'package:quizmaker/views/signup.dart';
@@ -18,32 +19,37 @@ class _SignInState extends State<SignIn> {
   AuthService authService = AuthService();
 
   bool _isLoading = false;
+  String _signInError = "";
 
   signIn() async {
+    _signInError = "";
     if (_formKey.currentState!.validate()) {
-
       setState(() {
         _isLoading = true;
       });
 
       await authService.signInEmailAndPass(email, password).then((val) {
-         if (val != null) {
-           setState(() {
-             _isLoading = false;
-           });
-           Navigator.pushReplacement(
-               context, MaterialPageRoute(builder: (context) => const Home()));
-         } else {
-           setState(() {
-             _isLoading = false;
-           });
-           print('val is null');
-         }
+        setState(() {
+          _isLoading = false;
+        });
+        if (val != null) {
+          if (val.runtimeType == MyUser) {
+            /* This is a valid Firebase user */
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const Home()));
+          } else {
+            /* an error has occurred (type String) */
+            setState(() {
+              _signInError = val;
+            });
+          }
+        } else {
+          setState(() {
+            _signInError =
+                "Unexpected error occurred (Empty response from the server)";
+          });
+        }
       });
-
-
-
-
     }
   }
 
@@ -100,6 +106,22 @@ class _SignInState extends State<SignIn> {
                     /// Margin space
                     const SizedBox(
                       height: 24,
+                    ),
+
+                    /// Error container
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      alignment: Alignment.center,
+                      child: _signInError.isNotEmpty
+                          ? Text(
+                              _signInError,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 16),
+                            )
+                          : const SizedBox(
+                              height: 0,
+                            ),
                     ),
 
                     /// The button

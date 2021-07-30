@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizmaker/models/my_user.dart';
 import 'package:quizmaker/services/auth.dart';
 import 'package:quizmaker/views/home.dart';
 import 'package:quizmaker/views/signin.dart';
@@ -15,9 +16,12 @@ class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
   late String name, email, password;
   AuthService authService = AuthService();
+
   bool _isLoading = false;
+  String _signUpError = "";
 
   signUp() async {
+    _signUpError = "";
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -25,12 +29,25 @@ class _SignUpState extends State<SignUp> {
       await authService
           .signUpWithEmailAndPassword(email, password)
           .then((value) {
+        setState(() {
+          _isLoading = false;
+        });
         if (value != null) {
+          if (value.runtimeType == MyUser) {
+            /* This is a valid firebase User */
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const Home()));
+          } else {
+            /* An error has occurred */
+            setState(() {
+              _signUpError = value;
+            });
+          }
+        } else {
           setState(() {
-            _isLoading = false;
+            _signUpError =
+                "Unexpected error occurred (Empty response from the server)";
           });
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const Home()));
         }
       });
     }
@@ -107,6 +124,22 @@ class _SignUpState extends State<SignUp> {
                       height: 24,
                     ),
 
+                    /// Error container
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      alignment: Alignment.center,
+                      child: _signUpError.isNotEmpty
+                          ? Text(
+                              _signUpError,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 16),
+                            )
+                          : const SizedBox(
+                              height: 0,
+                            ),
+                    ),
+
                     /// The button
                     GestureDetector(
                       onTap: () {
@@ -118,8 +151,7 @@ class _SignUpState extends State<SignUp> {
                             color: Colors.blue,
                             borderRadius: BorderRadius.circular(30)),
                         alignment: Alignment.center,
-
-                        /// We should use width or the container width will take the width of it's child
+                        /* We should use width or the container width will take the width of it's child */
                         width: MediaQuery.of(context).size.width - 48,
                         child: const Text(
                           "Sign in",
